@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <!-- Materialize CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <!-- Materialize JavaScript (for interactive components) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js" defer></script>
+</head>
+<body class="container">
+    <div class="row">
+        <div class="col s12 m6 offset-m3">
+            <!-- Login Card -->
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title center-align">Login</span>
+                    <form id="login-form">
+                        <div class="input-field">
+                            <input type="email" id="login-email" placeholder="Email" required>
+                            <label for="login-email">Email</label>
+                        </div>
+                        <div class="input-field">
+                            <input type="password" id="login-password" placeholder="Password" required>
+                            <label for="login-password">Password</label>
+                        </div>
+                        <button class="btn waves-effect waves-light" type="button" onclick="login()">Login</button>
+                    </form>
+                    <p id="login-message" class="red-text"></p>
+                </div>
+            </div>
+
+            <!-- Sign-up Card -->
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title center-align">Sign Up</span>
+                    <form id="signup-form">
+                        <div class="input-field">
+                            <input type="email" id="signup-email" placeholder="Email" required>
+                            <label for="signup-email">Email</label>
+                        </div>
+                        <div class="input-field">
+                            <input type="password" id="signup-password" placeholder="Password" required>
+                            <label for="signup-password">Password</label>
+                        </div>
+                        <button class="btn waves-effect waves-light" type="button" onclick="signup()">Sign Up</button>
+                    </form>
+                    <p id="signup-message" class="red-text"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Login function
+        async function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const messageElement = document.getElementById('login-message');
+            if (response.ok) {
+                messageElement.textContent = 'Login successful!';
+                messageElement.style.color = 'green';
+                // Redirect to the to-do app page after successful login
+                window.location.href = '/todo'; // Redirect to /todo
+            } else {
+                const result = await response.json();
+                messageElement.textContent = result.message;
+            }
+        }
+
+        // Sign-up function
+        async function signup() {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+
+            const response = await fetch('/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const signupMessageElement = document.getElementById('signup-message');
+            if (response.ok) {
+                signupMessageElement.textContent = 'Sign-up successful! Please login.';
+                signupMessageElement.style.color = 'green';
+                document.getElementById('signup-form').reset(); // Clear form after success
+            } else {
+                const result = await response.json();
+                signupMessageElement.textContent = result.message;
+            }
+        }
+    </script>
+</body>
+</html>

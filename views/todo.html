@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do App</title>
+    <!-- Materialize CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <!-- Materialize JavaScript (for interactive components) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js" defer></script>
+    <style>
+        .completed {
+            text-decoration: line-through;
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar/Header -->
+    <nav>
+        <div class="nav-wrapper blue">
+            <a href="#" class="brand-logo center">To-Do App</a>
+            <ul id="nav-mobile" class="right">
+                <li><a href="#" onclick="logout()" class="btn-flat white-text">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col s12 m8 offset-m2">
+                <h4 class="center-align">Your To-Do List</h4>
+
+                <!-- To-Do List -->
+                <ul class="collection" id="todo-list"></ul>
+
+                <!-- Add To-Do Form -->
+                <div class="card">
+                    <div class="card-content">
+                        <form id="todo-form">
+                            <div class="input-field">
+                                <input type="text" id="new-todo" placeholder="New to-do" required>
+                                <label for="new-todo">New To-Do</label>
+                            </div>
+                            <button class="btn waves-effect waves-light" type="submit">Add</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fetch and display todos on page load
+        fetch('/todos')
+            .then(response => response.json())
+            .then(data => {
+                const todoList = document.getElementById('todo-list');
+                todoList.innerHTML = ''; // Clear the list before rendering
+                data.forEach(todo => {
+                    const todoItem = document.createElement('li');
+                    todoItem.className = 'collection-item';
+                    todoItem.innerHTML = `
+                        <span id="todo-desc-${todo.id}" class="${todo.completed ? 'completed' : ''}">${todo.description}</span>
+                        <div class="secondary-content">
+                            <button class="btn-small waves-effect waves-light" onclick="markAsCompleted(${todo.id}, ${!todo.completed})">${todo.completed ? 'Undo' : 'Complete'}</button>
+                            <button class="btn-small red lighten-2 waves-effect waves-light" onclick="deleteTodo(${todo.id})">Delete</button>
+                            <button class="btn-small yellow darken-2 waves-effect waves-light" onclick="editTodoPrompt(${todo.id}, '${todo.description}')">Edit</button>
+                        </div>
+                    `;
+                    todoList.appendChild(todoItem);
+                });
+            });
+
+        // Add a new to-do item
+        document.getElementById('todo-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const newTodo = document.getElementById('new-todo').value;
+
+            fetch('/todos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: newTodo })
+            })
+            .then(response => response.json())
+            .then(todo => {
+                const todoList = document.getElementById('todo-list');
+                const todoItem = document.createElement('li');
+                todoItem.className = 'collection-item';
+                todoItem.innerHTML = `
+                    <span>${todo.description}</span>
+                    <div class="secondary-content">
+                        <button class="btn-small waves-effect waves-light" onclick="markAsCompleted(${todo.id}, true)">Complete</button>
+                        <button class="btn-small red lighten-2 waves-effect waves-light" onclick="deleteTodo(${todo.id})">Delete</button>
+                        <button class="btn-small yellow darken-2 waves-effect waves-light" onclick="editTodoPrompt(${todo.id}, '${todo.description}')">Edit</button>
+                    </div>
+                `;
+                todoList.appendChild(todoItem);
+                document.getElementById('new-todo').value = ''; // Clear the input field
+            })
+            .catch(error => console.error('Error adding todo:', error));
+        });
+
+        // Mark a to-do item as completed
+        function markAsCompleted(todoId, completed) {
+            fetch(`/todos/${todoId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ completed: completed })
+            })
+            .then(() => {
+                location.reload(); // Reload the page to update the list
+            });
+        }
+
+        // Delete a to-do item
+        function deleteTodo(todoId) {
+            fetch(`/todos/${todoId}`, {
+                method: 'DELETE'
+            })
+            .then(() => {
+                location.reload(); // Reload the page to update the list
+            });
+        }
+
+        // Edit a to-do item
+        function editTodoPrompt(todoId, currentDescription) {
+            const newDescription = prompt("Edit your todo:", currentDescription);
+            if (newDescription && newDescription.trim() !== "") {
+                editTodo(todoId, newDescription);
+            }
+        }
+
+        // Update the description of a to-do
+        function editTodo(todoId, newDescription) {
+            fetch(`/todos/${todoId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: newDescription })
+            })
+            .then(() => {
+                location.reload(); // Reload the page to update the list
+            });
+        }
+
+        // Logout function
+        function logout() {
+            fetch('/logout', {
+                method: 'POST'
+            })
+            .then(() => {
+                window.location.href = '/login.html'; // Redirect to the login page after logging out
+            });
+        }
+    </script>
+</body>
+</html>
